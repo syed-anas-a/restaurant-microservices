@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import UserSerializer
 from .models import User
@@ -81,5 +81,27 @@ class LogoutView(APIView):
             return Response({"message": "Logged out"}, status=status.HTTP_200_OK)
         except TokenError:
             return Response({"error":"Invalid Token"}, status=status.HTTP_400_BAD_REQUEST)
+
+class VerifyTokenView(APIView):
+    def post(self, request):
+        token = request.data.get("token")
+
+        if not token:
+            return Response({"error":"Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            access_token = AccessToken(token)
+            user_id = access_token["user_id"]
+            user = get_object_or_404(User, id=user_id)
+            return Response(
+                {
+                    "user_id": user_id,
+                    "group": user.group
+            })
+
+        except TokenError:
+            return Response({"error": "Invalid or expired token"},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
 
 

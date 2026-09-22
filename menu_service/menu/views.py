@@ -12,8 +12,8 @@ class MenuView(APIView):
 
     def get_permissions(self):
             if self.request.method == 'POST':
-                return IsManager()
-            return AllowAny()
+                return [IsManager()]
+            return [AllowAny()]
 
     def get(self, request):
         queryset = Menu.objects.all()
@@ -31,8 +31,8 @@ class MenuDetailView(APIView):
 
     def get_permissions(self):
             if self.request.method in ['PUT', 'DELETE']:
-                return IsManager()
-            return AllowAny()
+                return [IsManager()]
+            return [AllowAny()]
 
     def get(self, request, item_id):
         item = get_object_or_404(Menu, id=item_id)
@@ -43,6 +43,8 @@ class MenuDetailView(APIView):
         item = get_object_or_404(Menu, id=item_id)
         serializer = MenuSerializer(item, data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, item_id):
@@ -54,8 +56,8 @@ class CategoryView(APIView):
 
     def get_permissions(self):
             if self.request.method == 'POST':
-                return IsManager()
-            return AllowAny()
+                return [IsManager()]
+            return [AllowAny()]
     
     def get(self, request):
         queryset = Category.objects.all()
@@ -74,8 +76,8 @@ class CategoryDetailView(APIView):
 
     def get_permissions(self):
         if self.request.method in ['PUT', 'DELETE']:
-            return IsManager()
-        return AllowAny()
+            return [IsManager()]
+        return [AllowAny()]
 
     def get(self, request, category_id):
         category = get_object_or_404(Category, id=category_id)
