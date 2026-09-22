@@ -83,6 +83,9 @@ class LogoutView(APIView):
             return Response({"error":"Invalid Token"}, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyTokenView(APIView):
+
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         token = request.data.get("token")
 
