@@ -10,7 +10,7 @@ from .permissions import IsManager
 # Create your views here.
 class MenuView(APIView):
 
-    def has_permission(self):
+    def get_permissions(self):
             if self.request.method == 'POST':
                 return IsManager()
             return AllowAny()
@@ -21,7 +21,7 @@ class MenuView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-        serializer = MenuSerializer(data=request.data, many=True)
+        serializer = MenuSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -29,7 +29,7 @@ class MenuView(APIView):
 
 class MenuDetailView(APIView):
 
-    def has_permission(self):
+    def get_permissions(self):
             if self.request.method in ['PUT', 'DELETE']:
                 return IsManager()
             return AllowAny()
@@ -41,9 +41,9 @@ class MenuDetailView(APIView):
 
     def put(self, request, item_id):
         item = get_object_or_404(Menu, id=item_id)
-        serializer = MenuSerializer(data=item)
+        serializer = MenuSerializer(item, data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_201_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, item_id):
         item = get_object_or_404(Menu, id=item_id)
@@ -52,7 +52,7 @@ class MenuDetailView(APIView):
 
 class CategoryView(APIView):
 
-    def has_permission(self):
+    def get_permissions(self):
             if self.request.method == 'POST':
                 return IsManager()
             return AllowAny()
@@ -63,7 +63,7 @@ class CategoryView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-        serializer = CategorySerializer(data=request.data, many=True)
+        serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -72,7 +72,7 @@ class CategoryView(APIView):
 
 class CategoryDetailView(APIView):
 
-    def has_permission(self):
+    def get_permissions(self):
         if self.request.method in ['PUT', 'DELETE']:
             return IsManager()
         return AllowAny()
@@ -80,15 +80,19 @@ class CategoryDetailView(APIView):
     def get(self, request, category_id):
         category = get_object_or_404(Category, id=category_id)
         serializer = CategorySerializer(category)
+
         return Response(serializer.data, status=status.HTTP_200_OK) 
 
     def put(self, request, category_id):
         obj = get_object_or_404(Category, id=category_id)
         serializer = CategorySerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_201_OK)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, category_id):
         category = get_object_or_404(Category, id=category_id)
         category.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
