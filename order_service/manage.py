@@ -9,7 +9,7 @@ def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'order_service.settings')
 
-    runserver.default_port = "8002"
+    runserver.default_port = "8004"
 
     try:
         from django.core.management import execute_from_command_line
