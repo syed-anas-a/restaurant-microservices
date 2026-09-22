@@ -6,7 +6,7 @@ class IsManager(BasePermission):
 
 class IsDeliveryCrew(BasePermission):
     def has_permission(self, request, view):
-            return request.user.group == "DELIVERY_CREW"
+            return request.user.group == "DELIVERY CREW"
 
 class IsCustomer(BasePermission):
     def has_permission(self, request, view):

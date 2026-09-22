@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost'] 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
 
 
 # Application definition
@@ -143,6 +143,6 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH TOKEN LIFETIME": timedelta(days=20)
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=20)
 }
 

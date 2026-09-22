@@ -26,7 +26,7 @@ class User(AbstractUser):
     group = models.CharField(max_length=20, choices=Group.choices, default=Group.CUSTOMER)
 
     username = None
-    email = models.CharField(max_length=200, unique=True)
+    email = models.EmailField(max_length=200, unique=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
