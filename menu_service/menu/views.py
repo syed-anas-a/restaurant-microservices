@@ -5,11 +5,15 @@ from .models import Menu, Category
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from .permissions import IsManager
 
 # Create your views here.
 class MenuView(APIView):
 
-    permission_classes = [AllowAny]
+    def has_permission(self):
+            if self.request.method == 'POST':
+                return IsManager()
+            return AllowAny()
 
     def get(self, request):
         queryset = Menu.objects.all()
@@ -17,8 +21,6 @@ class MenuView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         serializer = MenuSerializer(data=request.data, many=True)
         if serializer.is_valid():
             serializer.save()
@@ -27,7 +29,10 @@ class MenuView(APIView):
 
 class MenuDetailView(APIView):
 
-    permission_classes = [AllowAny]
+    def has_permission(self):
+            if self.request.method in ['PUT', 'DELETE']:
+                return IsManager()
+            return AllowAny()
 
     def get(self, request, item_id):
         item = get_object_or_404(Menu, id=item_id)
@@ -35,23 +40,22 @@ class MenuDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
 
     def put(self, request, item_id):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         item = get_object_or_404(Menu, id=item_id)
         serializer = MenuSerializer(data=item)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_201_OK)
 
     def delete(self, request, item_id):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         item = get_object_or_404(Menu, id=item_id)
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class CategoryView(APIView):
 
-    permission_classes = [AllowAny]
+    def has_permission(self):
+            if self.request.method == 'POST':
+                return IsManager()
+            return AllowAny()
     
     def get(self, request):
         queryset = Category.objects.all()
@@ -59,8 +63,6 @@ class CategoryView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         serializer = CategorySerializer(data=request.data, many=True)
         if serializer.is_valid():
             serializer.save()
@@ -70,7 +72,10 @@ class CategoryView(APIView):
 
 class CategoryDetailView(APIView):
 
-    permission_classes = [AllowAny]
+    def has_permission(self):
+        if self.request.method in ['PUT', 'DELETE']:
+            return IsManager()
+        return AllowAny()
 
     def get(self, request, category_id):
         category = get_object_or_404(Category, id=category_id)
@@ -78,16 +83,12 @@ class CategoryDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
 
     def put(self, request, category_id):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         obj = get_object_or_404(Category, id=category_id)
         serializer = CategorySerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_201_OK)
 
     def delete(self, request, category_id):
-        if request.user.group != "MANAGER":
-            return Response({"error":"Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
         category = get_object_or_404(Category, id=category_id)
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
