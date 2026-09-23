@@ -1,6 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 import requests
+from django.conf import settings
 
 class ServiceUser:
     is_authenticated = True
@@ -25,8 +26,9 @@ class RemoteJWTAuthentication(BaseAuthentication):
 
         try:
             response = requests.post(
-                "http://127.0.0.1:8000/auth/verify/",
+                f"{settings.AUTH_SERVICE_URL}/auth/verify/",
                 json={"token":token}
+                , timeout=3
             )
         except requests.exceptions.RequestException:
             raise AuthenticationFailed("Auth service unavailable")

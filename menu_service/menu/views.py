@@ -5,7 +5,7 @@ from .models import Menu, Category
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from .permissions import IsManager
+from remote_auth.permissions import IsManager
 
 # Create your views here.
 class MenuView(APIView):

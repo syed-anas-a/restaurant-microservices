@@ -134,6 +134,8 @@ MAILERS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'menu.authentications.RemoteJWTAuthentication',
+        'remote_auth.authentication.RemoteJWTAuthentication',
     ]
 }
+
+AUTH_SERVICE_URL = "http://127.0.0.1:8001"

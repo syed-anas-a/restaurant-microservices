@@ -131,3 +131,11 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'remote_auth.authentication.RemoteJWTAuthentication',
+    ]
+}
+
+AUTH_SERVICE_URL = "http://127.0.0.1:8001"
