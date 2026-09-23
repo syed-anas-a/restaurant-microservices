@@ -19,3 +19,7 @@ class CartSerializer(serializers.ModelSerializer):
     def get_total(self, obj):
         total = sum((item.price * item.quantity for item in obj.items.all()), Decimal('0.00'))
         return str(total.quantize(Decimal('0.01')))
+
+class AddCartItemSerializer(serializers.Serializer):
+    menu_item_id = serializers.IntegerField(min_value=1)
+    quantity = serializers.IntegerField(min_value=1, default=1)

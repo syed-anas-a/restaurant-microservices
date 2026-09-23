@@ -3,3 +3,6 @@ class CartException(Exception):
 
 class MenuItemNotFound(CartException):
     pass
+
+class MenuServiceUnavailable(CartException):
+    pass

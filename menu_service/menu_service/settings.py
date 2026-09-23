@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'menu',
     'rest_framework',
-    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -138,4 +137,4 @@ REST_FRAMEWORK = {
     ]
 }
 
-AUTH_SERVICE_URL = "http://127.0.0.1:8001"
+AUTH_SERVICE_URL = config('AUTH_SERVICE_URL', default='http://127.0.0.1:8001')
