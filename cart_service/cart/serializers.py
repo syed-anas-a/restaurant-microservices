@@ -1,12 +1,21 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 from .models import Cart, CartItem
+from decimal import Decimal
 
-class CartSerializer(ModelSerializer):
-    class Meta:
-        model = Cart
-        fields = '__all__'
-
-class CartItemSerializer(ModelSerializer):
+class CartItemSerializer(serializers.ModelSerializer):
+    price = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
     class Meta:
         model = CartItem
         fields = '__all__'
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'items', 'total']
+
+    def get_total(self, obj):
+        total = sum((item.price * item.quantity for item in obj.items.all()), Decimal('0.00'))
+        return str(total.quantize(Decimal('0.01')))
