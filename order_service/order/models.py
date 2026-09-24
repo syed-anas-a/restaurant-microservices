@@ -12,8 +12,8 @@ class Order(models.Model):
 
     user_id = models.IntegerField()
     order_value = models.DecimalField(max_digits=8, decimal_places=2)
-    delivery_crew_id = models.IntegerField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PLACED)
+    delivery_crew_id = models.IntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     
 
 class OrderItem(models.Model):

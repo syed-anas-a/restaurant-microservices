@@ -1,0 +1,112 @@
+from .models import Order, OrderItem
+from .exceptions import (
+    OrderNotFound, CartEmpty, 
+    CartServiceUnavailable, MenuServiceUnavailable, 
+    MenuItemNotFound, CartClearFailed
+)
+from django.conf import settings
+import requests
+from decimal import Decimal
+from django.db import transaction
+
+class OrderService:
+
+    @staticmethod
+    def get_all_orders(user_id):
+        try:
+            order = Order.objects.filter(user_id=user_id)
+        except Order.DoesNotExist:
+            raise OrderNotFound("No orders yet for this user")
+
+        return order
+
+    def fetch_cart(auth_header):
+        try:
+            response = requests.get(
+                f"settings.CART_SERVICE_URL/cart/",
+                headers={"Authorization":auth_header},
+                timeout=3
+            )
+        except requests.exceptions.RequestException:
+            raise CartServiceUnavailable("Cart service unavailable")
+
+        if response.status_code != 200:
+            raise CartServiceUnavailable("Cart service error")
+
+        cart = response.json()
+
+        if not cart["items"]:
+            raise CartEmpty("Cart is empty")
+
+        return [ 
+            {
+                "menu_item_id": item["menu_item_id"],
+                "price": item["price"],
+                "quantity": item["quantity"]
+            }
+            for item in cart["items"]
+        ]
+
+    def fetch_menu_price(menu_item_id):
+        try:
+            response = requests.get(
+                f"{settings.MENU_SERVICE_URL}/menu/items/{menu_item_id}/"
+                , timeout=3
+            )
+        except requests.exceptions.RequestException:
+            raise MenuServiceUnavailable("Menu service is unavailable")
+
+        if response.status_code == 404:
+            raise MenuItemNotFound("Menu item no longer exists")
+        if response.status_code != 200:
+            raise MenuServiceUnavailable("Menu service error")
+
+        return Decimal(response.json()["price"])
+
+    def clear_cart(auth_header):
+        try: 
+            response = requests.delete(
+                f"{settings.CART_SERVICE_URL}/cart/"
+                , headers={"Authorization": auth_header}
+                , timeout=3
+            )
+        except requests.exceptions.RequestException:
+            raise CartServiceUnavailable("Cart service is unavailable")
+
+        if response.status_code == 404:
+            raise CartEmpty("Cart is empty")
+        if response.status_code != 204:
+            raise CartServiceUnavailable("Cart service error")
+
+    def place_order(user_id, auth_header):
+        cart_items = OrderService.fetch_cart(auth_header=auth_header)
+        for item in cart_items:
+            item["price"] = OrderService.fetch_menu_price(menu_item_id=item["menu_item_id"])
+
+        order_value = sum(
+            (item["price"]*item["quantity"]
+            for item in cart_items),
+            Decimal("0.00")
+        )
+
+        with transaction.atomic():
+            order = Order.objects.create(
+                user_id=user_id,
+                order_value=order_value
+            )
+
+            OrderItem.objects.bulk_create([
+                OrderItem(order=order, **item) for item in cart_items
+            ])
+
+        if not OrderService.clear_cart(auth_header=auth_header):
+            order.status = Order.status.FAILED
+            order.save(update_fields=["status"])
+            raise CartClearFailed("Order failed")
+
+        order.status = Order.status.PLACED
+        order.save(update_fields=["status"])
+
+        return order
+
+
