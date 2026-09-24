@@ -74,6 +74,12 @@ class CartService:
             raise CartItemNotFound("Cart item not found")
 
         cart_item.delete()
+
+    @staticmethod
+    def clear_cart(user_id):
+        CartItem.objects.filter(
+            cart__user_id=user_id
+        ).delete()
         
 
 
