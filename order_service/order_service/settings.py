@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'order',
 ]
 
 MIDDLEWARE = [
@@ -129,4 +131,6 @@ MAILERS = {
     },
 }
 
-AUTH_SERVICE_URL = "http://127.0.0.1:8001"
+AUTH_SERVICE_URL = config('AUTH_SERVICE_URL', default='http://127.0.0.1:8001')
+MENU_SERVICE_URL = config("MENU_SERVICE_URL", default='http://127.0.0.1:8002')
+CART_SERVICE_URL = config("CART_SERVICE_URL", default='http://127.0.0.1:8003')
