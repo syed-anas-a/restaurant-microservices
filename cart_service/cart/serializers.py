@@ -3,10 +3,9 @@ from .models import Cart, CartItem
 from decimal import Decimal
 
 class CartItemSerializer(serializers.ModelSerializer):
-    price = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
     class Meta:
         model = CartItem
-        fields = '__all__'
+        fields = ['id', 'menu_item_id', 'price', 'quantity']
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
