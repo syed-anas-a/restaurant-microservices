@@ -19,7 +19,7 @@ class OrderView(APIView):
 
         order = OrderService.get_all_orders(user_id=request.user.user_id)
 
-        serializer = OrderSerializer(order)
+        serializer = OrderSerializer(order, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -40,7 +40,7 @@ class OrderView(APIView):
         except CartServiceUnavailable as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        serializer = OrderSerializer(order, many=True)
+        serializer = OrderSerializer(order)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         

@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .services import CartService
 from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound
-from rest_framework.permissions import IsAuthenticated
 from remote_auth.permissions import IsInternalService
 
 # Create your views here.

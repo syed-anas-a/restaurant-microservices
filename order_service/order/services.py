@@ -1,7 +1,6 @@
 from .models import Order, OrderItem
 from .exceptions import (
-    OrderNotFound, CartEmpty, 
-    CartServiceUnavailable, MenuServiceUnavailable, 
+    CartEmpty, CartServiceUnavailable, MenuServiceUnavailable, 
     MenuItemNotFound, CartClearFailed
 )
 from django.conf import settings
@@ -14,7 +13,7 @@ class OrderService:
     @staticmethod
     def get_all_orders(user_id):
 
-        return Order.objects.filter(user_id=user_id)
+        return Order.objects.prefetch_related("items").filter(user_id=user_id)
 
     @staticmethod
     def fetch_cart(auth_header):
