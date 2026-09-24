@@ -1,9 +1,6 @@
 class OrderException(Exception):
     pass
 
-class OrderNotFound(OrderException):
-    pass
-
 class CartServiceUnavailable(OrderException):
     pass
 

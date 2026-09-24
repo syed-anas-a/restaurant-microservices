@@ -5,6 +5,7 @@ class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         PLACED = "PLACED", "Placed"
+        FAILED = "FAILED", "Failed"
         PREPARING = "PREPARING", "Preparing"
         OUT_FOR_DELIVERY = "OUT FOR DELIVERY", "Out for Delivery"
         DELIVERED = "DELIVERED", "Delivered"

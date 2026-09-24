@@ -13,17 +13,14 @@ class OrderService:
 
     @staticmethod
     def get_all_orders(user_id):
-        try:
-            order = Order.objects.filter(user_id=user_id)
-        except Order.DoesNotExist:
-            raise OrderNotFound("No orders yet for this user")
 
-        return order
+        return Order.objects.filter(user_id=user_id)
 
+    @staticmethod
     def fetch_cart(auth_header):
         try:
             response = requests.get(
-                f"settings.CART_SERVICE_URL/cart/",
+                f"{settings.CART_SERVICE_URL}/cart/",
                 headers={"Authorization":auth_header},
                 timeout=3
             )
@@ -41,12 +38,12 @@ class OrderService:
         return [ 
             {
                 "menu_item_id": item["menu_item_id"],
-                "price": item["price"],
                 "quantity": item["quantity"]
             }
             for item in cart["items"]
         ]
 
+    @staticmethod
     def fetch_menu_price(menu_item_id):
         try:
             response = requests.get(
@@ -63,6 +60,7 @@ class OrderService:
 
         return Decimal(response.json()["price"])
 
+    @staticmethod
     def clear_cart(auth_header):
         try: 
             response = requests.delete(
@@ -71,13 +69,11 @@ class OrderService:
                 , timeout=3
             )
         except requests.exceptions.RequestException:
-            raise CartServiceUnavailable("Cart service is unavailable")
+            return False
 
-        if response.status_code == 404:
-            raise CartEmpty("Cart is empty")
-        if response.status_code != 204:
-            raise CartServiceUnavailable("Cart service error")
+        return response.status_code == 204
 
+    @staticmethod
     def place_order(user_id, auth_header):
         cart_items = OrderService.fetch_cart(auth_header=auth_header)
         for item in cart_items:
@@ -100,11 +96,11 @@ class OrderService:
             ])
 
         if not OrderService.clear_cart(auth_header=auth_header):
-            order.status = Order.status.FAILED
+            order.status = Order.Status.FAILED
             order.save(update_fields=["status"])
             raise CartClearFailed("Order failed")
 
-        order.status = Order.status.PLACED
+        order.status = Order.Status.PLACED
         order.save(update_fields=["status"])
 
         return order

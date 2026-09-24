@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .services import OrderService
 from .exceptions import (
-    OrderNotFound, CartClearFailed,
+    CartClearFailed,
     CartServiceUnavailable, CartEmpty,
     MenuServiceUnavailable, MenuItemNotFound
 )
@@ -16,10 +16,8 @@ class OrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        try:
-            order = OrderService.get_all_orders(user_id=request.user.user_id)
-        except OrderNotFound as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        order = OrderService.get_all_orders(user_id=request.user.user_id)
 
         serializer = OrderSerializer(order)
 
@@ -32,17 +30,17 @@ class OrderView(APIView):
             order = OrderService.place_order(auth_header=auth_header, user_id=request.user.user_id)
 
         except MenuItemNotFound as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except MenuServiceUnavailable as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except CartEmpty as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except CartClearFailed as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except CartServiceUnavailable as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        serializer = OrderSerializer(order)
+        serializer = OrderSerializer(order, many=True)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
