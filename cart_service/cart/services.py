@@ -4,8 +4,6 @@ from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFou
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
-from django.shortcuts import get_object_or_404
-from django.http import Http404
 
 class CartService:
 
@@ -54,7 +52,7 @@ class CartService:
     def update_item(user_id, menu_item_id, quantity):
         try:
             cart_item = CartItem.objects.get(
-                user_id=user_id,
+                cart__user_id=user_id,
                 menu_item_id=menu_item_id,
             )
         except CartItem.DoesNotExist:
