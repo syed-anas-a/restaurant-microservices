@@ -21,8 +21,6 @@ class CartView(APIView):
             return [IsAuthenticated(), IsInternalService()]
         return [IsAuthenticated()]
 
-    permission_classes = [IsAuthenticated]
-
     def get(self, request):
         cart, _ = Cart.objects.prefetch_related("items").get_or_create(user_id=request.user.user_id)
         serializer = CartSerializer(cart)
@@ -54,7 +52,10 @@ class CartView(APIView):
         serializer = RestoreCartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        CartService.restore_cart(user_id=request.user.user_id, items=serializer.validated_data)
+        CartService.restore_cart(
+            user_id=request.user.user_id, 
+            items=serializer.validated_data["items"]
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
