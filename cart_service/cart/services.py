@@ -1,6 +1,6 @@
 import requests
 from .models import Cart, CartItem
-from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartNotFound, CartItemNotFound
+from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
@@ -13,7 +13,7 @@ class CartService:
     def fetch_menu_item(menu_item_id):
         try:
             response = requests.get(
-                f"{settings.MENU_SERVICE_URL}/menu/{menu_item_id}/",
+                f"{settings.MENU_SERVICE_URL}/menu/items/{menu_item_id}/",
                 timeout=3
             )
         except requests.exceptions.RequestException:
@@ -53,17 +53,15 @@ class CartService:
     @staticmethod
     def update_item(user_id, menu_item_id, quantity):
         try:
-            cart = get_object_or_404(user_id=user_id)
-        except Http404:
-            raise CartNotFound("Cart not found for the user")
-
-        try:
-            cart_item = get_object_or_404(cart=cart, menu_item_id=menu_item_id)
-        except Http404:
+            cart_item = CartItem.objects.get(
+                user_id=user_id,
+                menu_item_id=menu_item_id,
+            )
+        except CartItem.DoesNotExist:
             raise CartItemNotFound("Cart item not found")
 
         cart_item.quantity = quantity
-        cart_item.save()
+        cart_item.save(update_fields=["quantity"])
 
         return cart_item
 

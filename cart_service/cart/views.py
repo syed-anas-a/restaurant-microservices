@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .services import CartService
-from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound, CartNotFound
+from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound
 from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
@@ -54,8 +54,6 @@ class CartDetailView(APIView):
                 menu_item_id=menu_item_id,
                 **input_serializer.validated_data
             )
-        except CartNotFound as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
         except CartItemNotFound as e:
             return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
 
