@@ -77,6 +77,7 @@ class OrderService:
         try:
             response = requests.put(
                 f"{settings.CART_SERVICE_URL}/cart/",
+                json={"items":cart_snapshot},
                 headers={
                     "Authorization":auth_header,
                     "X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN,
