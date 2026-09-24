@@ -65,6 +65,19 @@ class CartService:
 
         return cart_item
 
+    @staticmethod
+    def delete_item(user_id, menu_item_id):
+        try:
+            cart_item = CartItem.objects.get(
+                user_id=user_id,
+                menu_item_id=menu_item_id
+            )
+        except CartItem.DoesNotExist:
+            raise CartItemNotFound("Cart item not found")
+
+        cart_item.delete()
+        
+
 
 
 

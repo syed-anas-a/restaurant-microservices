@@ -40,7 +40,7 @@ class CartView(APIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class CartDetailView(APIView):
+class CartItemView(APIView):
 
     permission_classes = [IsAuthenticated]
 
@@ -60,4 +60,15 @@ class CartDetailView(APIView):
         serializer = CartItemSerializer(cart_item)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, menu_item_id):
+        try:
+            CartService.delete_item(
+                user_id=request.user.user_id,
+                menu_item_id=menu_item_id
+            )
+        except CartItemNotFound as e:
+            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"message":"Item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         
