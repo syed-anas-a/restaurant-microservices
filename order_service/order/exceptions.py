@@ -15,3 +15,6 @@ class MenuServiceUnavailable(OrderException):
 
 class CartClearFailed(OrderException):
     pass
+
+class CartRestoreFailed(OrderException):
+    pass

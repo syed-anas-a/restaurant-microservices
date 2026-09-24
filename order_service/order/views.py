@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .services import OrderService
 from .exceptions import (
-    CartClearFailed,
+    CartClearFailed, CartRestoreFailed,
     CartServiceUnavailable, CartEmpty,
     MenuServiceUnavailable, MenuItemNotFound
 )
@@ -38,6 +38,8 @@ class OrderView(APIView):
         except CartClearFailed as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except CartServiceUnavailable as e:
+            return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except CartRestoreFailed as e:
             return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         serializer = OrderSerializer(order)

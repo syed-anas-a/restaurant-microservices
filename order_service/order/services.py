@@ -1,7 +1,7 @@
 from .models import Order, OrderItem
 from .exceptions import (
     CartEmpty, CartServiceUnavailable, MenuServiceUnavailable, 
-    MenuItemNotFound, CartClearFailed
+    MenuItemNotFound, CartClearFailed, CartRestoreFailed
 )
 from django.conf import settings
 import requests
@@ -73,6 +73,21 @@ class OrderService:
         return response.status_code == 204
 
     @staticmethod
+    def restore_cart(auth_header, cart_snapshot):
+        try:
+            response = requests.put(
+                f"{settings.CART_SERVICE_URL}/cart/",
+                headers={
+                    "Authorization":auth_header,
+                    "X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN,
+                },
+                timeout=3
+            )
+        except requests.exceptions.RequestException:
+            return False
+        return response.status_code == 204
+
+    @staticmethod
     def place_order(user_id, auth_header):
         cart_items = OrderService.fetch_cart(auth_header=auth_header)
         for item in cart_items:
@@ -95,8 +110,13 @@ class OrderService:
             ])
 
         if not OrderService.clear_cart(auth_header=auth_header):
+            restored = OrderService.restore_cart(auth_header=auth_header, cart_snapshot=cart_items)
             order.status = Order.Status.FAILED
             order.save(update_fields=["status"])
+
+            if not restored:
+                raise CartRestoreFailed("Cart cannot be restored")
+
             raise CartClearFailed("Order failed")
 
         order.status = Order.Status.PLACED
