@@ -26,4 +26,9 @@ class AddCartItemSerializer(serializers.Serializer):
 class UpdateCartItemSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
 
+class RestoreCartSerializer(serializers.Serializer):
+    menu_item_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1) 
+    price = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal("0.00"))
+
 

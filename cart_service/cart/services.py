@@ -80,6 +80,19 @@ class CartService:
         CartItem.objects.filter(
             cart__user_id=user_id
         ).delete()
+
+    @staticmethod
+    def restore_cart(user_id, items):
+        cart, _ = Cart.objects.get_or_create(user_id=user_id)
+        for item in item:
+            CartItem.objects.update_or_create(
+                cart=cart,
+                menu_item_id=item["menu_item_id"],
+                defaults={
+                    "price":item["price"],
+                    "quantity":item["quantity"]
+                }
+            )
         
 
 

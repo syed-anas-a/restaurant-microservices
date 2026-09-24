@@ -1,5 +1,9 @@
-from .models import Cart
-from .serializers import CartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer
+from .models import Cart, CartItem
+from .serializers import (
+    CartSerializer, CartItemSerializer, 
+    AddCartItemSerializer, UpdateCartItemSerializer,
+    RestoreCartSerializer
+)
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -7,9 +11,15 @@ from rest_framework import status
 from .services import CartService
 from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound
 from rest_framework.permissions import IsAuthenticated
+from remote_auth.permissions import IsInternalService
 
 # Create your views here.
 class CartView(APIView):
+
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            return [IsAuthenticated(), IsInternalService()]
+        return [IsAuthenticated()]
 
     permission_classes = [IsAuthenticated]
 
@@ -39,6 +49,14 @@ class CartView(APIView):
         serializer = CartItemSerializer(cart_item)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request):
+        serializer = RestoreCartSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        CartService.restore_cart(user_id=request.user.user_id, items=serializer.validated_data)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request):
         CartService.clear_cart(user_id=request.user.user_id)
