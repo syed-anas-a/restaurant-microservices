@@ -1,11 +1,11 @@
 from .models import Cart
-from .serializers import CartSerializer, CartItemSerializer, AddCartItemSerializer
+from .serializers import CartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .services import CartService
-from .exceptions import MenuItemNotFound, MenuServiceUnavailable
+from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartItemNotFound, CartNotFound
 from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
@@ -39,3 +39,27 @@ class CartView(APIView):
         serializer = CartItemSerializer(cart_item)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class CartDetailView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, menu_item_id):
+        input_serializer = UpdateCartItemSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+
+        try:
+            cart_item = CartService.update_item(
+                user_id = request.user.user_id,
+                menu_item_id=menu_item_id,
+                **input_serializer.validated_data
+            )
+        except CartNotFound as e:
+            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except CartItemNotFound as e:
+            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CartItemSerializer(cart_item)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        

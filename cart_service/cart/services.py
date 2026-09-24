@@ -1,9 +1,11 @@
 import requests
 from .models import Cart, CartItem
-from .exceptions import MenuItemNotFound, MenuServiceUnavailable
+from .exceptions import MenuItemNotFound, MenuServiceUnavailable, CartNotFound, CartItemNotFound
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 
 class CartService:
 
@@ -47,6 +49,24 @@ class CartService:
                 cart_item.refresh_from_db(fields=["quantity"])
 
         return cart_item
+
+    @staticmethod
+    def update_item(user_id, menu_item_id, quantity):
+        try:
+            cart = get_object_or_404(user_id=user_id)
+        except Http404:
+            raise CartNotFound("Cart not found for the user")
+
+        try:
+            cart_item = get_object_or_404(cart=cart, menu_item_id=menu_item_id)
+        except Http404:
+            raise CartItemNotFound("Cart item not found")
+
+        cart_item.quantity = quantity
+        cart_item.save()
+
+        return cart_item
+
 
 
 
