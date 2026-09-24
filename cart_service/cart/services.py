@@ -2,6 +2,8 @@ import requests
 from .models import Cart, CartItem
 from .exceptions import MenuItemNotFound, MenuServiceUnavailable
 from django.conf import settings
+from django.db import transaction
+from django.db.models import F
 
 class CartService:
 
@@ -28,20 +30,21 @@ class CartService:
 
         menu_item = CartService.fetch_menu_item(menu_item_id)
 
-        cart, _ = Cart.objects.get_or_create(user_id=user_id)
-        cart_item, created = CartItem.objects.get_or_create(
-            menu_item_id=menu_item_id,
-            cart=cart,
-            defaults={
-                "price":menu_item["price"], 
-                "quantity":quantity
-            }
-        )
-        if not created:
-            cart_item.price = menu_item.price
-            cart_item.quantity += quantity
-
-        cart_item.save()
+        with transaction.atomic():
+            cart, _ = Cart.objects.get_or_create(user_id=user_id)
+            cart_item, created = CartItem.objects.get_or_create(
+                menu_item_id=menu_item_id,
+                cart=cart,
+                defaults={
+                    "price":menu_item["price"], 
+                    "quantity":quantity
+                }
+            )
+            if not created:
+                cart_item.price = menu_item["price"]
+                cart_item.quantity = F("quantity") + quantity
+                cart_item.save(update_fields=["price", "quantity"])
+                cart_item.refresh_from_db(fields=["quantity"])
 
         return cart_item
 
