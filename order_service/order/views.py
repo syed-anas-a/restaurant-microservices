@@ -10,6 +10,9 @@ from .exceptions import (
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import OrderSerializer
+from remote_auth.permissions import IsManager, IsOwner
+from django.shortcuts import get_object_or_404
+from .models import Order
 
 # Create your views here.
 class OrderView(APIView):
@@ -45,4 +48,27 @@ class OrderView(APIView):
         serializer = OrderSerializer(order)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class OrderDetailView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        if request.user.group != "MANAGER" and order.user_id != request.user.user_id:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, order_id):
+        if request.user.group != "MANAGER":
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        new_status = request.data.get("status")
+        order = get_object_or_404(Order, id=order_id)
+        if new_status not in Order.Status.values:
+            return Response({"error":"Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+        order.status = new_status
+        order.save(update_fields=["status"])
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
         

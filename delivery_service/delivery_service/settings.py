@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'delivery',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -141,4 +142,4 @@ REST_FRAMEWORK = {
 AUTH_SERVICE_URL = config('AUTH_SERVICE_URL', default='http://127.0.0.1:8001')
 MENU_SERVICE_URL = config("MENU_SERVICE_URL", default='http://127.0.0.1:8002')
 CART_SERVICE_URL = config("CART_SERVICE_URL", default='http://127.0.0.1:8003')
-ORDER_SERVICE_URL = config("CART_SERVICE_URL", default='http://127.0.0.1:8004')
+ORDER_SERVICE_URL = config("ORDER_SERVICE_URL", default='http://127.0.0.1:8004')
