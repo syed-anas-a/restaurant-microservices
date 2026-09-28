@@ -13,3 +13,9 @@ class Delivery(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ASSIGNED)
     assigned_at = models.DateTimeField(auto_now_add=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
+
+    ALLOWED_TRANSITIONS = {
+        Status.ASSIGNED: {Status.OUT_FOR_DELIVERY},
+        Status.OUT_FOR_DELIVERY: {Status.DELIVERED},
+        Status.DELIVERED: set(),
+    }

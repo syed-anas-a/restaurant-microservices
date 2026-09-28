@@ -10,7 +10,6 @@ from .exceptions import (
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import OrderSerializer
-from remote_auth.permissions import IsManager, IsOwner
 from django.shortcuts import get_object_or_404
 from .models import Order
 
