@@ -125,11 +125,29 @@ STATIC_URL = 'static/'
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Email
+if config("EMAIL_USE_SMTP", default=False, cast=bool):
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+            "OPTIONS": {
+                "host": "smtp.gmail.com",
+                "port": 587,
+                "use_tls": True,
+                "username": config("SMTP_USER"),
+                "password": config("SMTP_PASSWORD"),
+                "timeout": 10,
+            },
+        },
+    }
+else:
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        },
+    }
+
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="syedanas@gmail.com")
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -142,3 +160,9 @@ MENU_SERVICE_URL = config("MENU_SERVICE_URL", default='http://127.0.0.1:8002')
 CART_SERVICE_URL = config("CART_SERVICE_URL", default='http://127.0.0.1:8003')
 
 INTERNAL_SERVICE_TOKEN = config("INTERNAL_SERVICE_TOKEN")
+
+
+# Celery
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

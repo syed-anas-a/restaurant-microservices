@@ -27,7 +27,7 @@ class OrderView(APIView):
 
         auth_header = request.headers.get("Authorization")
         try:
-            order = OrderService.place_order(auth_header=auth_header, user_id=request.user.user_id)
+            order = OrderService.place_order(auth_header=auth_header, user_id=request.user.user_id, email=request.user.email)
 
         except MenuItemNotFound as e:
             return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)

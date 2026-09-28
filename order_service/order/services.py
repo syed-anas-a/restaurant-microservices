@@ -7,6 +7,11 @@ from django.conf import settings
 import requests
 from decimal import Decimal
 from django.db import transaction
+import logging
+from .tasks import send_order_confirmation_email
+from kombu.exceptions import OperationalError
+
+logger = logging.getLogger(__name__)
 
 class OrderService:
 
@@ -88,8 +93,14 @@ class OrderService:
             return False
         return response.status_code == 204
 
+    def queue_order_confirmation_email(order_id, email):
+        try:
+            send_order_confirmation_email(order_id, email)
+        except OperationalError:
+            logger.exception("Could not queue confirmation mail")
+
     @staticmethod
-    def place_order(user_id, auth_header):
+    def place_order(user_id, email, auth_header):
         cart_items = OrderService.fetch_cart(auth_header=auth_header)
         for item in cart_items:
             item["price"] = OrderService.fetch_menu_price(menu_item_id=item["menu_item_id"])
@@ -122,6 +133,11 @@ class OrderService:
 
         order.status = Order.Status.PLACED
         order.save(update_fields=["status"])
+
+        if email:
+            transaction.on_commit(
+                lambda:OrderService.queue_order_confirmation_email(order_id=order.id, email=email)
+            )
 
         return order
 
