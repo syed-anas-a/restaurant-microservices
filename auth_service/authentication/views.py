@@ -99,7 +99,8 @@ class VerifyTokenView(APIView):
             return Response(
                 {
                     "user_id": user_id,
-                    "group": user.group
+                    "group": user.group,
+                    "email": user.email
             })
 
         except TokenError:

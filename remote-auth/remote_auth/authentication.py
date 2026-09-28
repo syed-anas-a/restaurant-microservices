@@ -6,9 +6,10 @@ from django.conf import settings
 class ServiceUser:
     is_authenticated = True
 
-    def __init__(self, user_id, group):
+    def __init__(self, user_id, group, email):
         self.user_id = user_id
         self.group = group
+        self.email = email
 
 class RemoteJWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
@@ -37,6 +38,10 @@ class RemoteJWTAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Invalid or expired token")
 
         data = response.json()
-        service_user = ServiceUser(user_id=data["user_id"], group=data["group"])
+        service_user = ServiceUser(
+            user_id=data["user_id"], 
+            group=data["group"],
+            email=data["email"]
+        )
 
         return (service_user, token)
