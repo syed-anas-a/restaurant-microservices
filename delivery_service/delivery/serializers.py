@@ -11,7 +11,7 @@ class DeliverySerializer(serializers.ModelSerializer):
         fields = ['id', 'order_id', 'customer_id', 'crew_id', 'status', 'assigned_at', 'delivered_at']
 
 class DeliveryStatusSerializer(serializers.Serializer):
-    status = serializers.CharField(max_length=20, choices=Delivery.Status.values)
+    status = serializers.ChoiceField(choices=Delivery.Status.values)
 
     def validate_status(self, value):
         current_status = self.instance.status
