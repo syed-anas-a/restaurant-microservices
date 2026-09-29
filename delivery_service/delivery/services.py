@@ -4,8 +4,10 @@ from django.conf import settings
 from .exceptions import (
     UserNotFound, UserServiceUnavailable,
     OrderNotFound, OrderServiceUnavailable,
-    UserNotDeliveryCrew, OrderNotPlaced
+    UserNotDeliveryCrew, OrderNotPlaced,
+    DeliveryInProgress
 )
+from django.shortcuts import get_object_or_404
 
 class DeliveryService:
 
@@ -71,3 +73,27 @@ class DeliveryService:
         )
 
         return delivery
+
+    @staticmethod
+    def reassign_delivery(delivery_id, new_crew_id, auth_header):
+        delivery = get_object_or_404(Delivery, id=delivery_id)
+
+        if delivery.status != Delivery.Status.ASSIGNED:
+            raise DeliveryInProgress("Can't reassign once delivery in progress")
+
+        user = DeliveryService.fetch_user(user_id=new_crew_id, auth_header=auth_header)
+
+        if user["group"] != "DELIVERY CREW":
+            raise UserNotDeliveryCrew("User is not a delivery crew")
+
+        if Delivery.objects.filter(crew_id=new_crew_id).exclude(status=Delivery.Status.DELIVERED).exists():
+            raise DeliveryInProgress("crew member already has an active delivery")
+
+        delivery.crew_id = new_crew_id
+        delivery.save(update_fields=["crew_id"])
+
+        return delivery
+        
+
+        
+

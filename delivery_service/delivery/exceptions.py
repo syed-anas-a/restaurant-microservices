@@ -19,3 +19,5 @@ class UserNotDeliveryCrew(DeliveryException):
 class OrderNotPlaced(DeliveryException):
     pass
 
+class DeliveryInProgress(DeliveryException):
+    pass
