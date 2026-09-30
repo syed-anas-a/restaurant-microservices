@@ -95,7 +95,7 @@ class OrderService:
 
     def queue_order_confirmation_email(order_id, email):
         try:
-            send_order_confirmation_email(order_id, email)
+            send_order_confirmation_email.delay(order_id, email)
         except OperationalError:
             logger.exception("Could not queue confirmation mail")
 
@@ -131,13 +131,16 @@ class OrderService:
 
             raise CartClearFailed("Order failed")
 
-        order.status = Order.Status.PLACED
-        order.save(update_fields=["status"])
+        with transaction.atomic():
 
-        if email:
-            transaction.on_commit(
-                lambda:OrderService.queue_order_confirmation_email(order_id=order.id, email=email)
-            )
+            order.status = Order.Status.PLACED
+            order.save(update_fields=["status"])
+
+            if email:
+                transaction.on_commit(
+                    lambda:OrderService.queue_order_confirmation_email(order_id=order.id, email=email), 
+                    robust=True,
+                )
 
         return order
 

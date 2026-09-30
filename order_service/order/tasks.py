@@ -18,7 +18,7 @@ def send_order_confirmation_email(order_id, email):
         return
 
     email_content = ("\n").join(
-        f"Item {item.men_item_id} x {item.quantity} @ Rs.{item.price}"
+        f"Item {item.menu_item_id} x {item.quantity} @ Rs.{item.price}"
         for item in order.items.all()
     )
 
@@ -30,6 +30,6 @@ def send_order_confirmation_email(order_id, email):
             f"Items:\n{email_content}\n\n"
             f"Total: ₹{order.order_value}\n"
         ),
-        from_email="syedanas@gmail.com",
+        from_email=None,
         recipient_list=[email],
     )
