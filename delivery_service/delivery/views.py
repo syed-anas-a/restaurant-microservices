@@ -28,12 +28,15 @@ class DeliveryView(APIView):
 
     def get(self, request):
         if request.user.group == "MANAGER":
-            delivery = Delivery.objects.all()
+            deliveries = Delivery.objects.all()
         elif request.user.group == "DELIVERY CREW":
-            delivery = Delivery.objects.filter(crew_id=request.user.user_id)
+            deliveries = Delivery.objects.filter(crew_id=request.user.user_id)
         elif request.user.group == "CUSTOMER":
-            delivery = Delivery.objects.filter(customer_id=request.user.user_id)
-        return Response(DeliverySerializer(delivery, many=True).data, status=status.HTTP_200_OK)
+            deliveries = Delivery.objects.filter(customer_id=request.user.user_id)
+        else:
+            Response({"error":"Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response(DeliverySerializer(deliveries, many=True).data, status=status.HTTP_200_OK)
     
     def post(self, request):
         serializer = DeliveryCreateSerializer(data=request.data)
@@ -98,13 +101,13 @@ class DeliveryStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, delivery_id):
-        delivery = get_object_or_404(instance=delivery, id=delivery_id)
+        delivery = get_object_or_404(Delivery, id=delivery_id)
         if delivery.crew_id != request.user.user_id:
             return Response({
                 "error":"Not your delivery"
                 }, status=status.HTTP_403_FORBIDDEN
             )
-        serializer = DeliveryStatusSerializer(Delivery, data=request.data)
+        serializer = DeliveryStatusSerializer(instance=delivery, data=request.data)
         serializer.is_valid(raise_exception=True)
         delivery.status = serializer.validated_data["status"]
         if delivery.status == Delivery.Status.DELIVERED:

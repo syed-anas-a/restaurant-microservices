@@ -63,7 +63,7 @@ class DeliveryService:
             raise UserNotDeliveryCrew("User is not a delivery crew")
 
         order = DeliveryService.fetch_order(order_id=order_id, auth_header=auth_header)
-        if order.status != "PLACED":
+        if order["status"] != "PLACED":
             raise OrderNotPlaced("Order not placed")
         
         delivery = Delivery.objects.create(
