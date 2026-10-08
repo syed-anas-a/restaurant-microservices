@@ -21,9 +21,8 @@ PyJWT==2.14.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 redis==6.4.0
--e git+ssh://git@github.com/syed-anas-a/restaurant-microservices.git@8ce1499e793aa42c22dbc0e833617547cd530f71#egg=remote_auth&subdirectory=remote-auth
+-e ./remote-auth
 requests==2.34.2
-rest-framework-simplejwt==0.0.2
 six==1.17.0
 sqlparse==0.6.0
 typing_extensions==4.16.0

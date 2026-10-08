@@ -86,7 +86,7 @@ class DeliveryService:
         if user["group"] != "DELIVERY CREW":
             raise UserNotDeliveryCrew("User is not a delivery crew")
 
-        if Delivery.objects.filter(crew_id=new_crew_id).exclude(status=Delivery.Status.DELIVERED).exists():
+        if Delivery.objects.filter(crew_id=new_crew_id).exclude(status=Delivery.Status.DELIVERED).exclude(id=delivery_id).exists():
             raise DeliveryInProgress("crew member already has an active delivery")
 
         delivery.crew_id = new_crew_id
