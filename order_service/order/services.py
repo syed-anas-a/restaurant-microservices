@@ -93,6 +93,7 @@ class OrderService:
             return False
         return response.status_code == 204
 
+    @staticmethod
     def queue_order_confirmation_email(order_id, email):
         try:
             send_order_confirmation_email.delay(order_id, email)
