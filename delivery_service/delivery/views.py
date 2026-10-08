@@ -34,7 +34,7 @@ class DeliveryView(APIView):
         elif request.user.group == "CUSTOMER":
             deliveries = Delivery.objects.filter(customer_id=request.user.user_id)
         else:
-            Response({"error":"Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error":"Not authorized"}, status=status.HTTP_403_FORBIDDEN)
 
         return Response(DeliverySerializer(deliveries, many=True).data, status=status.HTTP_200_OK)
     

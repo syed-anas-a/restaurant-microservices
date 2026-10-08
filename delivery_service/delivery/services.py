@@ -58,7 +58,7 @@ class DeliveryService:
         order_id = data.get("order_id")
         crew_id = data.get("crew_id")
 
-        user = DeliveryService.fetch_user(crew_id=crew_id, auth_header=auth_header)
+        user = DeliveryService.fetch_user(user_id=crew_id, auth_header=auth_header)
         if user["group"] != "DELIVERY CREW":
             raise UserNotDeliveryCrew("User is not a delivery crew")
 
