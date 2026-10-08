@@ -143,3 +143,5 @@ AUTH_SERVICE_URL = config('AUTH_SERVICE_URL', default='http://127.0.0.1:8001')
 MENU_SERVICE_URL = config("MENU_SERVICE_URL", default='http://127.0.0.1:8002')
 CART_SERVICE_URL = config("CART_SERVICE_URL", default='http://127.0.0.1:8003')
 ORDER_SERVICE_URL = config("ORDER_SERVICE_URL", default='http://127.0.0.1:8004')
+
+KAFKA_BOOTSTRAP_SERVERS = config("KAFKA_BOOTSTRAP_SERVERS", default="localhost:9092")
