@@ -169,3 +169,17 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 
 KAFKA_BOOTSTRAP_SERVERS = config("KAFKA_BOOTSTRAP_SERVERS", default="localhost:9092")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "order": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}

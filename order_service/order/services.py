@@ -10,6 +10,7 @@ from django.db import transaction
 import logging
 from .tasks import send_order_confirmation_email
 from kombu.exceptions import OperationalError
+from .events import build_event, publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,17 @@ class OrderService:
             logger.exception("Could not queue confirmation mail")
 
     @staticmethod
+    def publish_order_placed(order):
+        event = build_event(
+            event_type="order.placed",
+            data={
+                "order_id":order.id,
+                "customer_id":order.user_id
+            }
+        )
+        publish_event(topic="order.placed", key=order.id, event=event)
+
+    @staticmethod
     def place_order(user_id, email, auth_header):
         cart_items = OrderService.fetch_cart(auth_header=auth_header)
         for item in cart_items:
@@ -136,6 +148,11 @@ class OrderService:
 
             order.status = Order.Status.PLACED
             order.save(update_fields=["status"])
+
+            transaction.on_commit(
+                lambda:OrderService.publish_order_placed(order),
+                robust=True
+            )
 
             if email:
                 transaction.on_commit(
