@@ -17,6 +17,7 @@ from .exceptions import (
 )
 from django.db import IntegrityError
 from django.utils import timezone
+from django.db import transaction
 
 # Create your views here.
 class DeliveryView(APIView):
@@ -37,28 +38,6 @@ class DeliveryView(APIView):
             return Response({"error":"Not authorized"}, status=status.HTTP_403_FORBIDDEN)
 
         return Response(DeliverySerializer(deliveries, many=True).data, status=status.HTTP_200_OK)
-    
-    def post(self, request):
-        serializer = DeliveryCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            delivery = DeliveryService.assign_delivery(serializer.validated_data, request.headers.get("Authorization"))
-        except UserNotFound as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except UserServiceUnavailable as e:
-            return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except UserNotDeliveryCrew as e:
-            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except OrderNotFound as e:
-            return Response({"error":str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except OrderServiceUnavailable as e:
-            return Response({"error":str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except IntegrityError as e:
-            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except OrderNotPlaced as e:
-            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(DeliverySerializer(delivery).data, status=status.HTTP_201_CREATED)
 
 class DeliveryDetailView(APIView):
     def get_permissions(self):
@@ -110,11 +89,18 @@ class DeliveryStatusView(APIView):
         serializer = DeliveryStatusSerializer(instance=delivery, data=request.data)
         serializer.is_valid(raise_exception=True)
         delivery.status = serializer.validated_data["status"]
-        if delivery.status == Delivery.Status.DELIVERED:
-            delivery.delivered_at = timezone.now()
-            delivery.save(update_fields=["status", "delivered_at"])
-        else:
-            delivery.save(update_fields=["status"])
+
+        with transaction.atomic():
+            if delivery.status == Delivery.Status.DELIVERED:
+                delivery.delivered_at = timezone.now()
+                delivery.save(update_fields=["status", "delivered_at"])
+            else:
+                delivery.save(update_fields=["status"])
+                
+            transaction.on_commit(
+                lambda:DeliveryService.publish_delivery_status_changed(delivery=delivery),
+                robust=True
+            )
 
         return Response(DeliverySerializer(delivery).data, status=status.HTTP_200_OK)
         

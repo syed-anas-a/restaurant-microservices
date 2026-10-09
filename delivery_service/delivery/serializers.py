@@ -1,10 +1,6 @@
 from rest_framework import serializers
 from .models import Delivery
 
-class DeliveryCreateSerializer(serializers.Serializer):
-    order_id = serializers.IntegerField(min_value=1)
-    crew_id = serializers.IntegerField(min_value=1)
-
 class DeliverySerializer(serializers.ModelSerializer):
     class Meta:
         model = Delivery
