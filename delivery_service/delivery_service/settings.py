@@ -139,4 +139,6 @@ REST_FRAMEWORK = {
     ]
 }
 
+AUTH_SERVICE_URL = config('AUTH_SERVICE_URL', default='http://127.0.0.1:8001')
+
 KAFKA_BOOTSTRAP_SERVERS = config("KAFKA_BOOTSTRAP_SERVERS", default="localhost:9092")
