@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:17
+    env_file: .env
+    environment:
+      POSTGRES_DB: restaurant_auth
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth_service/Dockerfile
+    ports:
+      - "8001:8001"
+    env_file: auth_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
