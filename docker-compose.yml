@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: restaurant_auth
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
     ports:
       - "5433:5432"
     healthcheck:
@@ -24,6 +25,74 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1,auth-service
+    depends_on:
+      db:
+        condition: service_healthy
+  
+  menu-service:
+    build:
+      context: .
+      dockerfile: menu_service/Dockerfile
+    ports:
+      - "8002:8002"
+    env_file: menu_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1,menu-service
+      AUTH_SERVICE_URL: http://auth-service:8001
+    depends_on:
+      db:
+        condition: service_healthy
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: cart_service/Dockerfile
+    ports:
+      - "8003:8003"
+    env_file: cart_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1,cart-service
+      AUTH_SERVICE_URL: http://auth-service:8001
+      MENU_SERVICE_URL: http://menu-service:8002
+    depends_on:
+      db:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order_service/Dockerfile
+    ports:
+      - "8004:8004"
+    env_file: order_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1,order-service
+      AUTH_SERVICE_URL: http://auth-service:8001
+      MENU_SERVICE_URL: http://menu-service:8002
+      CART_SERVICE_URL: http://menu-service:8002
+    depends_on:
+      db:
+        condition: service_healthy
+
+  delivery-service:
+    build:
+      context: .
+      dockerfile: delivery_service/Dockerfile
+    ports:
+      - "8005:8005"
+    env_file: delivery_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1,delivery-service
+      AUTH_SERVICE_URL: http://auth-service:8001
     depends_on:
       db:
         condition: service_healthy
