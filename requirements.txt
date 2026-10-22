@@ -21,7 +21,7 @@ PyJWT==2.14.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 redis==6.4.0
--e ./remote-auth
+-e ./remote-auth   
 requests==2.34.2
 six==1.17.0
 sqlparse==0.6.0

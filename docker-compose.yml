@@ -1,4 +1,4 @@
-services:
+services:               
   db:
     image: postgres:17
     env_file: .env
@@ -14,18 +14,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   auth-service:
     build:
-      context: .
-      dockerfile: auth_service/Dockerfile
+      context: .      
+      dockerfile: auth_service/Dockerfile 
     ports:
       - "8001:8001"
     env_file: auth_service/.env
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      ALLOWED_HOSTS: localhost,127.0.0.1,auth-service
+      ALLOWED_HOSTS: localhost,127.0.0.1,auth-service  
     depends_on:
       db:
         condition: service_healthy
@@ -76,9 +84,28 @@ services:
       ALLOWED_HOSTS: localhost,127.0.0.1,order-service
       AUTH_SERVICE_URL: http://auth-service:8001
       MENU_SERVICE_URL: http://menu-service:8002
-      CART_SERVICE_URL: http://menu-service:8002
+      CART_SERVICE_URL: http://cart-service:8003
+      CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  
+  celery-worker:
+    build:
+      context: .
+      dockerfile: order_service/Dockerfile
+    command: celery -A order_service worker -l info
+    env_file: order_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   delivery-service:
