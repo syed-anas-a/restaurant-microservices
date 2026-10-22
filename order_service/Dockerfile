@@ -9,8 +9,12 @@ COPY ./requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY --chmod=755 ./docker/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
 COPY ./order_service .
 
 EXPOSE 8004
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8004"]
