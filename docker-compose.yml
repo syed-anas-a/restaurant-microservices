@@ -23,6 +23,41 @@ services:
       timeout: 5s
       retries: 10
 
+  kafka:
+    image: apache/kafka:4.0.0
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:29092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  kafka-init:
+    image: apache/kafka:4.1.0
+    command:
+      - sh
+      - -c
+      - |
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic order.placed --partitions 3 --replication-factor 1 --bootstrap-server kafka:29092 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic delivery.status_changed --partitions 3 --replication-factor 1 --bootstrap-server kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   auth-service:
     build:
       context: .      
@@ -86,11 +121,14 @@ services:
       MENU_SERVICE_URL: http://menu-service:8002
       CART_SERVICE_URL: http://cart-service:8003
       CELERY_BROKER_URL: redis://redis:6379/0
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
   
   celery-worker:
     build:
@@ -108,6 +146,23 @@ services:
       redis:
         condition: service_healthy
 
+  order-consumer:
+    build:
+      context: .
+      dockerfile: order_service/Dockerfile
+    command: python manage.py consumer_delivery_events
+    env_file: order_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
   delivery-service:
     build:
       context: .
@@ -120,9 +175,30 @@ services:
       DB_PORT: 5432
       ALLOWED_HOSTS: localhost,127.0.0.1,delivery-service
       AUTH_SERVICE_URL: http://auth-service:8001
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       db:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+  
+  delivery-consumer:
+    build:
+      context: .
+      dockerfile: delivery_service/Dockerfile
+    command: python manage.py consume_order_events
+    env_file: delivery_service/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
 
 volumes:
   postgres_data:

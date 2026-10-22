@@ -36,7 +36,7 @@ class Command(BaseCommand):
                     event = json.loads(msg.value())
                     print(event)
                     self._handle(event)
-                except ValueError, KeyError:
+                except (ValueError, KeyError):
                     logger.exception("Permanent failure, skipping: %s", msg.value())
                 consumer.commit(message=msg, asynchronous=False)
         finally:
