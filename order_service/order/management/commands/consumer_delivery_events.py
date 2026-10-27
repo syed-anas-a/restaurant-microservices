@@ -42,7 +42,7 @@ class Command(BaseCommand):
         finally:
             consumer.close()
 
-    def _handle(event):
+    def _handle(self, event):
         data = event["data"]
         order_id = data["order_id"]
         new_status = data["status"]

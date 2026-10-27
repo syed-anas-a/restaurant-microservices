@@ -60,7 +60,7 @@ class DeliveryDetailView(APIView):
         new_crew_id = request.data.get("crew_id")
 
         try:
-            delivery = DeliveryService.reassign_delivery(
+            delivery = DeliveryService.assign_delivery(
                 new_crew_id=new_crew_id,
                 delivery_id=delivery_id,
                 auth_header=request.headers.get("Authorization")
