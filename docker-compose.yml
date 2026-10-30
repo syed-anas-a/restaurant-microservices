@@ -1,9 +1,42 @@
+x-django-env: &django-env
+  DEBUG: ${DEBUG:-True}
+  DB_HOST: db
+  DB_PORT: 5432
+  DB_USER: ${POSTGRES_USER:-postgres}
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+x-auth-url: &auth-url
+  AUTH_SERVICE_URL: http://auth-service:8001
+
+x-internal-token: &internal-token
+  INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev-internal-service-token}
+
+x-order-env: &order-env
+  <<: [*django-env, *auth-url, *internal-token]
+  DB_NAME: restaurant_orders
+  SECRET_KEY: ${ORDER_SECRET_KEY:-dev-insecure-order-secret-key}
+  MENU_SERVICE_URL: http://menu-service:8002
+  CART_SERVICE_URL: http://cart-service:8003
+  CELERY_BROKER_URL: redis://redis:6379/0
+  KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  EMAIL_USE_SMTP: ${EMAIL_USE_SMTP:-False}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-orders@restaurant.local}
+
+x-delivery-env: &delivery-env
+  <<: [*django-env, *auth-url]
+  DB_NAME: restaurant_delivery
+  SECRET_KEY: ${DELIVERY_SECRET_KEY:-dev-insecure-delivery-secret-key}
+  KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
 services:               
   db:
     image: postgres:17
-    env_file: .env
     environment:                  
       POSTGRES_DB: restaurant_auth
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
@@ -64,11 +97,11 @@ services:
       dockerfile: auth_service/Dockerfile 
     ports:
       - "8001:8001"
-    env_file: auth_service/.env
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      ALLOWED_HOSTS: localhost,127.0.0.1,auth-service  
+      <<: *django-env
+      SECRET_KEY: ${AUTH_SECRET_KEY:-dev-insecure-auth-secret-key}
+      DB_NAME: restaurant_auth
+      ALLOWED_HOSTS: localhost,127.0.0.1,auth-service
       RUN_MIGRATIONS: 1
     depends_on:
       db:
@@ -80,12 +113,11 @@ services:
       dockerfile: menu_service/Dockerfile
     ports:
       - "8002:8002"
-    env_file: menu_service/.env
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
+      <<: [*django-env, *auth-url]
+      DB_NAME: restaurant_menu
+      SECRET_KEY: ${MENU_SECRET_KEY:-dev-insecure-menu-secret-key}
       ALLOWED_HOSTS: localhost,127.0.0.1,menu-service
-      AUTH_SERVICE_URL: http://auth-service:8001
       RUN_MIGRATIONS: 1
     depends_on:
       db:
@@ -97,12 +129,11 @@ services:
       dockerfile: cart_service/Dockerfile
     ports:
       - "8003:8003"
-    env_file: cart_service/.env
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
+      <<: [*django-env, *auth-url, *internal-token]
+      DB_NAME: restaurant_cart
+      SECRET_KEY: ${CART_SECRET_KEY:-dev-insecure-cart-secret-key}
       ALLOWED_HOSTS: localhost,127.0.0.1,cart-service
-      AUTH_SERVICE_URL: http://auth-service:8001
       MENU_SERVICE_URL: http://menu-service:8002
       RUN_MIGRATIONS: 1
     depends_on:
@@ -115,16 +146,9 @@ services:
       dockerfile: order_service/Dockerfile
     ports:
       - "8004:8004"
-    env_file: order_service/.env
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
+      <<: *order-env
       ALLOWED_HOSTS: localhost,127.0.0.1,order-service
-      AUTH_SERVICE_URL: http://auth-service:8001
-      MENU_SERVICE_URL: http://menu-service:8002
-      CART_SERVICE_URL: http://cart-service:8003
-      CELERY_BROKER_URL: redis://redis:6379/0
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       RUN_MIGRATIONS: 1
     depends_on:
       db:
@@ -139,11 +163,7 @@ services:
       context: .
       dockerfile: order_service/Dockerfile
     command: celery -A order_service worker -l info
-    env_file: order_service/.env
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      CELERY_BROKER_URL: redis://redis:6379/0
+    environment: *order-env
     depends_on:
       db:
         condition: service_healthy
@@ -155,11 +175,7 @@ services:
       context: .
       dockerfile: order_service/Dockerfile
     command: python manage.py consumer_delivery_events
-    env_file: order_service/.env
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    environment: *order-env
     restart: on-failure
     depends_on:
       db:
@@ -173,13 +189,9 @@ services:
       dockerfile: delivery_service/Dockerfile
     ports:
       - "8005:8005"
-    env_file: delivery_service/.env
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
+      <<: *delivery-env
       ALLOWED_HOSTS: localhost,127.0.0.1,delivery-service
-      AUTH_SERVICE_URL: http://auth-service:8001
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       RUN_MIGRATIONS: 1
     depends_on:
       db:
@@ -192,11 +204,7 @@ services:
       context: .
       dockerfile: delivery_service/Dockerfile
     command: python manage.py consume_order_events
-    env_file: delivery_service/.env
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    environment: *delivery-env
     restart: on-failure
     depends_on:
       db:
