@@ -103,6 +103,9 @@ services:
       DB_NAME: restaurant_auth
       ALLOWED_HOSTS: localhost,127.0.0.1,auth-service
       RUN_MIGRATIONS: 1
+      SEED_DATA: ${SEED_DATA:-1}
+      SEED_COMMAND: seed_users
+      SEED_PASSWORD: ${SEED_PASSWORD:-restaurant123}
     depends_on:
       db:
         condition: service_healthy
@@ -119,6 +122,8 @@ services:
       SECRET_KEY: ${MENU_SECRET_KEY:-dev-insecure-menu-secret-key}
       ALLOWED_HOSTS: localhost,127.0.0.1,menu-service
       RUN_MIGRATIONS: 1
+      SEED_DATA: ${SEED_DATA:-1}
+      SEED_COMMAND: seed_menu
     depends_on:
       db:
         condition: service_healthy
